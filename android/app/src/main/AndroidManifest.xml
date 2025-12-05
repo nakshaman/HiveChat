@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!-- (Optional older support) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!-- (Optional if using camera) -->
+    <uses-permission android:name="android.permission.CAMERA" />
     <application
         android:label="hivechat"
         android:name="${applicationName}"

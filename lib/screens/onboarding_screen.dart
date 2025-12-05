@@ -1,14 +1,16 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hivechat/screens/sign_up.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class OnBoardingScreen extends StatefulWidget {
+  const OnBoardingScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<OnBoardingScreen> createState() => _OnBoardingScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _OnBoardingScreenState extends State<OnBoardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 children: [
                   Text(
-                    'Enjoy the new expeience of chatting with Global Friends',
+                    'Enjoy the new experience of chatting with Global Friends',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.montserrat(
                       fontSize: MediaQuery.of(context).size.width * 0.06,
@@ -37,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   SizedBox(height: 15),
                   Text(
-                    'Come Let\'s Connect with the world',
+                    'Come Let\'s Connect with the world.',
                     style: GoogleFonts.montserrat(
                       fontSize: MediaQuery.of(context).size.width * 0.04,
                       fontWeight: FontWeight.w300,
@@ -47,7 +49,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: 10),
                   GestureDetector(
                     onTap: () {
-                      debugPrint("Goolge Sign in Button");
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => SignUp()),
+                      );
                     },
                     child: Container(
                       margin: EdgeInsets.symmetric(horizontal: 10),
@@ -61,16 +66,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         mainAxisSize: MainAxisSize.max,
                         children: [
-                          Image.asset(
-                            'images/google.jpg',
-                            height: MediaQuery.of(context).size.height * 0.07,
-                            width: MediaQuery.of(context).size.height * 0.07,
-                          ),
+                          Icon(CupertinoIcons.person, color: Colors.white),
                           SizedBox(
                             width: MediaQuery.of(context).size.height * 0.015,
                           ),
                           Text(
-                            'Sign in with Google',
+                            'Sign Up',
                             style: GoogleFonts.montserrat(
                               fontSize:
                                   MediaQuery.of(context).size.width * 0.06,
