@@ -12,6 +12,7 @@ class HomeSearch extends StatefulWidget {
 }
 
 class _HomeSearchState extends State<HomeSearch> {
+  FocusNode focusNode = FocusNode();
   TextEditingController searchTextControler = TextEditingController();
   String searchText = "";
   String getChatRoomId(String a, String b) {
@@ -40,190 +41,214 @@ class _HomeSearchState extends State<HomeSearch> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    focusNode.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    focusNode.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30),
-            topRight: Radius.circular(30),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
           ),
-        ),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: TextField(
-                onChanged: (value) {
-                  setState(() {
-                    searchText = value.toLowerCase().trim();
-                  });
-                },
-                controller: searchTextControler,
-                decoration: InputDecoration(
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: Colors.blueGrey[200],
-                  ),
-                  hintText: 'Search',
-                  hintStyle: TextStyle(
-                    fontSize: 18,
-                    color: Colors.blueGrey[200],
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey, width: 1.5),
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.grey, width: 1.5),
-                    borderRadius: BorderRadius.circular(30),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextField(
+                  cursorColor: Colors.blueGrey[200],
+                  focusNode: focusNode,
+                  onChanged: (value) {
+                    setState(() {
+                      searchText = value.toLowerCase().trim();
+                    });
+                  },
+                  controller: searchTextControler,
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: focusNode.hasFocus
+                          ? Colors.black
+                          : Colors.blueGrey[200],
+                    ),
+                    hintText: 'Search',
+                    hintStyle: TextStyle(
+                      fontSize: 18,
+                      color: Colors.blueGrey[200],
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.5),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.grey, width: 1.5),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
                   ),
                 ),
               ),
-            ),
-            Expanded(
-              child: StreamBuilder(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (!snapshot.hasData)
-                    return Center(child: CircularProgressIndicator());
-                  var docs = snapshot.data!.docs;
-                  var filteredUsers = docs.where((doc) {
-                    String username = doc['username'].toString();
-                    if (username == widget.myUserName) return false;
-                    if (searchText.isEmpty) return true;
-                    return username.toLowerCase().contains(searchText);
-                  }).toList();
-                  if (filteredUsers.isEmpty) {
-                    return Center(
-                      child: Text(
-                        'No user found',
-                        style: GoogleFonts.lato(color: Colors.black87),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    itemCount: filteredUsers.length,
-                    itemBuilder: (context, index) {
-                      var userData = filteredUsers[index];
-                      String otherUsername = userData['username'];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ChatScreen(otherUsername: otherUsername),
+              Expanded(
+                child: StreamBuilder(
+                  stream: FirebaseFirestore.instance
+                      .collection('users')
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return Center(child: CircularProgressIndicator());
+                    }
+                    var docs = snapshot.data!.docs;
+                    var filteredUsers = docs.where((doc) {
+                      String username = doc['username'].toString();
+                      if (username == widget.myUserName) return false;
+                      if (searchText.isEmpty) return true;
+                      return username.toLowerCase().contains(searchText);
+                    }).toList();
+                    if (filteredUsers.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'No user found',
+                          style: GoogleFonts.lato(color: Colors.black87),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      itemCount: filteredUsers.length,
+                      itemBuilder: (context, index) {
+                        var userData = filteredUsers[index];
+                        String otherUsername = userData['username'];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ChatScreen(otherUsername: otherUsername),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: EdgeInsetsGeometry.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
                             ),
-                          );
-                        },
-                        child: Padding(
-                          padding: EdgeInsetsGeometry.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          child: Material(
-                            elevation: 3,
-                            borderRadius: BorderRadius.circular(20),
-                            // ignore: deprecated_member_use
-                            shadowColor: Colors.black.withOpacity(0.05),
-                            color: Colors.white,
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: Colors.grey.shade200,
-                                  width: 1,
+                            child: Material(
+                              elevation: 3,
+                              borderRadius: BorderRadius.circular(20),
+                              // ignore: deprecated_member_use
+                              shadowColor: Colors.black.withOpacity(0.05),
+                              color: Colors.white,
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 5,
                                 ),
-                              ),
-                              width: MediaQuery.of(context).size.width,
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  // ClipRRect(
-                                  //   borderRadius:
-                                  //       BorderRadiusGeometry.circular(60),
-                                  //   child: Image.asset(
-                                  //     'images/boy.jpg',
-                                  //     height: 60,
-                                  //     width: 60,
-                                  //     fit: BoxFit.cover,
-                                  //   ),
-                                  // ),
-                                  CircleAvatar(
-                                    radius: 30,
-                                    child: Text(otherUsername[0].toUpperCase()),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Colors.grey.shade200,
+                                    width: 1,
                                   ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          otherUsername,
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        SizedBox(height: 5),
-                                        Text(
-                                          'Tap to chat',
-                                          overflow: TextOverflow.ellipsis,
-                                          maxLines: 1,
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w400,
-                                            color: Colors.grey[600],
-                                          ),
-                                        ),
-                                      ],
+                                ),
+                                width: MediaQuery.of(context).size.width,
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // ClipRRect(
+                                    //   borderRadius:
+                                    //       BorderRadiusGeometry.circular(60),
+                                    //   child: Image.asset(
+                                    //     'images/boy.jpg',
+                                    //     height: 60,
+                                    //     width: 60,
+                                    //     fit: BoxFit.cover,
+                                    //   ),
+                                    // ),
+                                    CircleAvatar(
+                                      radius: 30,
+                                      child: Text(
+                                        otherUsername[0].toUpperCase(),
+                                      ),
                                     ),
-                                  ),
-                                  FutureBuilder(
-                                    future: getLastMessageTime(otherUsername),
-                                    builder: (context, snapshot) {
-                                      if (!snapshot.hasData ||
-                                          snapshot.data == "") {
+                                    SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            otherUsername,
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                          SizedBox(height: 5),
+                                          Text(
+                                            'Tap to chat',
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w400,
+                                              color: Colors.grey[600],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    FutureBuilder(
+                                      future: getLastMessageTime(otherUsername),
+                                      builder: (context, snapshot) {
+                                        if (!snapshot.hasData ||
+                                            snapshot.data == "") {
+                                          return Text(
+                                            "",
+                                            style: GoogleFonts.lato(
+                                              fontSize: 14,
+                                              color: Colors.grey,
+                                            ),
+                                          );
+                                        }
                                         return Text(
-                                          "",
+                                          snapshot.data.toString(),
                                           style: GoogleFonts.lato(
                                             fontSize: 14,
                                             color: Colors.grey,
                                           ),
                                         );
-                                      }
-                                      return Text(
-                                        snapshot.data.toString(),
-                                        style: GoogleFonts.lato(
-                                          fontSize: 14,
-                                          color: Colors.grey,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
+                                      },
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  );
-                },
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

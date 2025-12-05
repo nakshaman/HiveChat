@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hivechat/authentication/auth.dart';
+import 'package:hivechat/authentication/auth_wrapper.dart';
 import 'package:hivechat/screens/home_search.dart';
-import 'package:hivechat/screens/log_in.dart';
 import 'package:hivechat/screens/profile.dart';
 
 class Home extends StatefulWidget {
@@ -43,103 +43,145 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        systemNavigationBarColor: Color(0xff703eff),
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
-      child: Scaffold(
-        backgroundColor: Color(0xff703eff),
-        body: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15.0,
-                  vertical: 5.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, authSnapshot) {
+        if (authSnapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
+          );
+        }
+        if (!authSnapshot.hasData) {
+          return const AuthWrapper();
+        }
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            systemNavigationBarColor: Color(0xff703eff),
+            systemNavigationBarIconBrightness: Brightness.light,
+          ),
+          child: Scaffold(
+            backgroundColor: Color(0xff703eff),
+            body: SafeArea(
+              bottom: false,
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15.0,
+                      vertical: 5.0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        GestureDetector(
-                          onTap: () {
-                            // Navigator.push(
-                            //   context,
-                            //   MaterialPageRoute(
-                            //     builder: (context) => Profile(),
-                            //   ),
-                            // );
-                          },
-                          child: Container(
-                            padding: EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.person_2_outlined,
-                              color: Color(0xff703eff),
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        username == null
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Profile(),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: EdgeInsets.all(10),
+                                decoration: BoxDecoration(
                                   color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              )
-                            : Text(
-                                username!,
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
+                                child: Icon(
+                                  Icons.person_2_outlined,
+                                  color: Color(0xff703eff),
                                 ),
                               ),
+                            ),
+                            SizedBox(width: 10),
+                            username == null
+                                ? SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : Text(
+                                    username!,
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () async {
+                            showDialog(
+                              context: context,
+                              builder: (dialogContext) {
+                                return AlertDialog(
+                                  title: const Text('Logout'),
+                                  content: const Text(
+                                    'Are you sure you want to log out?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () {
+                                        Navigator.pop(dialogContext);
+                                      },
+                                      child: const Text("Cancel"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () async {
+                                        Navigator.pop(dialogContext);
+                                        await AuthService().signOut();
+                                      },
+                                      child: const Text(
+                                        "Logout",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                          icon: Icon(Icons.logout, color: Colors.white),
+                        ),
                       ],
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        await AuthService().signOut();
-                      },
-                      icon: Icon(Icons.logout, color: Colors.white),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 15.0,
+                      vertical: 5.0,
                     ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 15.0,
-                  vertical: 5.0,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      'Chats',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 40,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                      ),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Chats',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  SizedBox(height: 10),
+                  username == null
+                      ? Center(child: CircularProgressIndicator())
+                      : HomeSearch(myUserName: username!),
+                ],
               ),
-              SizedBox(height: 10),
-              username == null
-                  ? Center(child: CircularProgressIndicator())
-                  : HomeSearch(myUserName: username!),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
