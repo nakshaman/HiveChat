@@ -40,12 +40,39 @@ class _HomeSearchState extends State<HomeSearch> {
     return "${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}";
   }
 
+  Future<List<String>> getMyChatUsers() async {
+    var snapshot = await FirebaseFirestore.instance
+        .collection('chatRooms')
+        .where('users', arrayContains: widget.myUserName)
+        .get();
+    Set<String> users = {};
+
+    for (var doc in snapshot.docs) {
+      List chatUsers = doc['users'];
+
+      for (var user in chatUsers) {
+        if (user != widget.myUserName) {
+          users.add(user.toLowerCase());
+        }
+      }
+    }
+    return users.toList();
+  }
+
+  List<String> chatUserList = [];
+
   @override
   void initState() {
     super.initState();
+    loadChatUsers();
     focusNode.addListener(() {
       setState(() {});
     });
+  }
+
+  void loadChatUsers() async {
+    chatUserList = await getMyChatUsers();
+    setState(() {});
   }
 
   @override
@@ -114,10 +141,17 @@ class _HomeSearchState extends State<HomeSearch> {
                     }
                     var listOfUsers = snapshot.data!.docs;
                     var filteredUsers = listOfUsers.where((doc) {
-                      String username = doc['username'].toString();
-                      if (username == widget.myUserName) return false;
-                      if (searchText.isEmpty) return true;
-                      return username.toLowerCase().contains(searchText);
+                      String username = doc['username']
+                          .toString()
+                          .toLowerCase();
+                      String myName = widget.myUserName.toLowerCase();
+                      if (username == myName) {
+                        return false;
+                      }
+                      if (searchText.isNotEmpty) {
+                        return username.contains(searchText);
+                      }
+                      return chatUserList.contains(username);
                     }).toList();
                     if (filteredUsers.isEmpty) {
                       return Center(
@@ -133,14 +167,15 @@ class _HomeSearchState extends State<HomeSearch> {
                         var userData = filteredUsers[index];
                         String otherUsername = userData['username'];
                         return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) =>
                                     ChatScreen(otherUsername: otherUsername),
                               ),
                             );
+                            loadChatUsers();
                           },
                           child: Padding(
                             padding: EdgeInsetsGeometry.symmetric(
@@ -173,27 +208,70 @@ class _HomeSearchState extends State<HomeSearch> {
                                     CircleAvatar(
                                       radius: 30,
                                       backgroundColor: Colors.grey[300],
-                                      backgroundImage:
+                                      // backgroundImage:
+                                      //     (userData['imageUrl'] != null &&
+                                      //         userData['imageUrl']
+                                      //             .toString()
+                                      //             .isNotEmpty)
+                                      //     ? NetworkImage(userData['imageUrl'])
+                                      //     : null,
+                                      child:
                                           (userData['imageUrl'] != null &&
                                               userData['imageUrl']
                                                   .toString()
                                                   .isNotEmpty)
-                                          ? NetworkImage(userData['imageUrl'])
-                                          : null,
-                                      child:
-                                          (userData['imageUrl'] == null ||
-                                              userData['imageUrl']
-                                                  .toString()
-                                                  .isEmpty)
-                                          ? Text(
+                                          ? ClipOval(
+                                              child: Image.network(
+                                                userData['imageUrl'],
+                                                width: 60,
+                                                height: 60,
+                                                fit: BoxFit.cover,
+                                                loadingBuilder:
+                                                    (
+                                                      context,
+                                                      child,
+                                                      loadingProgress,
+                                                    ) {
+                                                      if (loadingProgress ==
+                                                          null) {
+                                                        return child;
+                                                      }
+                                                      return SizedBox(
+                                                        width: 24,
+                                                        height: 24,
+                                                        child:
+                                                            CircularProgressIndicator(
+                                                              strokeWidth: 2,
+                                                            ),
+                                                      );
+                                                    },
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Text(
+                                                        otherUsername[0]
+                                                            .toUpperCase(),
+                                                        style: GoogleFonts.lato(
+                                                          fontSize: 22,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: Colors.black,
+                                                        ),
+                                                      );
+                                                    },
+                                              ),
+                                            )
+                                          : Text(
                                               otherUsername[0].toUpperCase(),
                                               style: GoogleFonts.lato(
                                                 fontSize: 22,
                                                 fontWeight: FontWeight.w500,
                                                 color: Colors.black,
                                               ),
-                                            )
-                                          : null,
+                                            ),
                                     ),
                                     SizedBox(width: 10),
                                     Expanded(
