@@ -1,12 +1,51 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hivechat/authentication/auth.dart';
 import 'package:hivechat/authentication/auth_wrapper.dart';
+import 'package:image_picker/image_picker.dart';
 
-class Profile extends StatelessWidget {
+class Profile extends StatefulWidget {
   const Profile({super.key});
+
+  @override
+  State<Profile> createState() => _ProfileState();
+}
+
+class _ProfileState extends State<Profile> {
+  bool isUploading = false;
+  final ImagePicker picker = ImagePicker();
+  Future<void> pickAndUploadImage(String uid) async {
+    try {
+      setState(() {
+        isUploading = true;
+      });
+      final XFile? pickedFile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 75,
+      );
+      if (pickedFile == null) return;
+      File file = File(pickedFile.path);
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('profilepics')
+          .child('$uid.jpg');
+      await ref.putFile(file);
+      final photoUrl = await ref.getDownloadURL();
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'imageUrl': photoUrl,
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      setState(() {
+        isUploading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,15 +98,30 @@ class Profile extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircleAvatar(
-                        radius: 70,
-                        backgroundColor: Colors.deepPurple[100],
-                        child: Text(
-                          username[0].toUpperCase(),
-                          style: GoogleFonts.lato(
-                            fontSize: 30,
-                            color: Colors.white,
-                          ),
+                      GestureDetector(
+                        onTap: () => pickAndUploadImage(user.uid),
+                        child: CircleAvatar(
+                          radius: 70,
+                          backgroundColor: Colors.deepPurple[100],
+                          foregroundImage:
+                              (snapshot.data!['imageUrl'] != null &&
+                                  snapshot.data!['imageUrl']
+                                      .toString()
+                                      .isNotEmpty)
+                              ? NetworkImage(snapshot.data!['imageUrl'])
+                              : null,
+                          child: isUploading
+                              ? CircularProgressIndicator(color: Colors.purple)
+                              : (snapshot.data!['imageUrl'] != null &&
+                                    snapshot.data!['imageUrl']
+                                        .toString()
+                                        .isNotEmpty)
+                              ? null
+                              : Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: Colors.deepPurple[700],
+                                ),
                         ),
                       ),
                       const SizedBox(height: 20),

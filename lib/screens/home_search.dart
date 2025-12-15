@@ -112,8 +112,8 @@ class _HomeSearchState extends State<HomeSearch> {
                     if (!snapshot.hasData) {
                       return Center(child: CircularProgressIndicator());
                     }
-                    var docs = snapshot.data!.docs;
-                    var filteredUsers = docs.where((doc) {
+                    var listOfUsers = snapshot.data!.docs;
+                    var filteredUsers = listOfUsers.where((doc) {
                       String username = doc['username'].toString();
                       if (username == widget.myUserName) return false;
                       if (searchText.isEmpty) return true;
@@ -170,21 +170,30 @@ class _HomeSearchState extends State<HomeSearch> {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    // ClipRRect(
-                                    //   borderRadius:
-                                    //       BorderRadiusGeometry.circular(60),
-                                    //   child: Image.asset(
-                                    //     'images/boy.jpg',
-                                    //     height: 60,
-                                    //     width: 60,
-                                    //     fit: BoxFit.cover,
-                                    //   ),
-                                    // ),
                                     CircleAvatar(
                                       radius: 30,
-                                      child: Text(
-                                        otherUsername[0].toUpperCase(),
-                                      ),
+                                      backgroundColor: Colors.grey[300],
+                                      backgroundImage:
+                                          (userData['imageUrl'] != null &&
+                                              userData['imageUrl']
+                                                  .toString()
+                                                  .isNotEmpty)
+                                          ? NetworkImage(userData['imageUrl'])
+                                          : null,
+                                      child:
+                                          (userData['imageUrl'] == null ||
+                                              userData['imageUrl']
+                                                  .toString()
+                                                  .isEmpty)
+                                          ? Text(
+                                              otherUsername[0].toUpperCase(),
+                                              style: GoogleFonts.lato(
+                                                fontSize: 22,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.black,
+                                              ),
+                                            )
+                                          : null,
                                     ),
                                     SizedBox(width: 10),
                                     Expanded(

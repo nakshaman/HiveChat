@@ -85,16 +85,44 @@ class _HomeState extends State<Home> {
                                   ),
                                 );
                               },
-                              child: Container(
-                                padding: EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  Icons.person_2_outlined,
-                                  color: Color(0xff703eff),
-                                ),
+                              child: StreamBuilder(
+                                stream: FirebaseFirestore.instance
+                                    .collection('users')
+                                    .doc(authSnapshot.data!.uid)
+                                    .snapshots(),
+                                builder: (context, userSnapshot) {
+                                  if (!userSnapshot.hasData) {
+                                    return SizedBox(
+                                      width: 40,
+                                      height: 40,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    );
+                                  }
+                                  final data =
+                                      userSnapshot.data!.data()
+                                          as Map<String, dynamic>;
+                                  final imageUrl = data['imageUrl'];
+                                  return CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: Colors.white,
+                                    backgroundImage:
+                                        (imageUrl != null &&
+                                            imageUrl.toString().isNotEmpty)
+                                        ? NetworkImage(imageUrl)
+                                        : null,
+                                    child:
+                                        (imageUrl == null ||
+                                            imageUrl.toString().isEmpty)
+                                        ? Icon(
+                                            Icons.person_2_outlined,
+                                            color: Color(0xff703eff),
+                                          )
+                                        : null,
+                                  );
+                                },
                               ),
                             ),
                             SizedBox(width: 10),
