@@ -153,7 +153,7 @@ class _HomeState extends State<Home> {
                                 return AlertDialog(
                                   title: const Text('Logout'),
                                   content: const Text(
-                                    'Are you sure you want to log out?',
+                                    'Are you sure you want to log out ?',
                                   ),
                                   actions: [
                                     TextButton(

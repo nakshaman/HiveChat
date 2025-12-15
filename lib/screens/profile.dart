@@ -17,17 +17,24 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   bool isUploading = false;
+  String? imageUrl;
   final ImagePicker picker = ImagePicker();
   Future<void> pickAndUploadImage(String uid) async {
     try {
       setState(() {
         isUploading = true;
+        imageUrl = null;
       });
       final XFile? pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 75,
       );
-      if (pickedFile == null) return;
+      if (pickedFile == null) {
+        setState(() {
+          isUploading = false;
+        });
+        return;
+      }
       File file = File(pickedFile.path);
       final ref = FirebaseStorage.instance
           .ref()
@@ -103,20 +110,29 @@ class _ProfileState extends State<Profile> {
                         child: CircleAvatar(
                           radius: 70,
                           backgroundColor: Colors.deepPurple[100],
-                          foregroundImage:
-                              (snapshot.data!['imageUrl'] != null &&
-                                  snapshot.data!['imageUrl']
-                                      .toString()
-                                      .isNotEmpty)
-                              ? NetworkImage(snapshot.data!['imageUrl'])
-                              : null,
+                          // foregroundImage:
+                          //     (snapshot.data!['imageUrl'] != null &&
+                          //         snapshot.data!['imageUrl']
+                          //             .toString()
+                          //             .isNotEmpty)
+                          //     ? NetworkImage(snapshot.data!['imageUrl'])
+                          //     : null,
                           child: isUploading
-                              ? CircularProgressIndicator(color: Colors.purple)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.purple,
+                                )
                               : (snapshot.data!['imageUrl'] != null &&
                                     snapshot.data!['imageUrl']
                                         .toString()
                                         .isNotEmpty)
-                              ? null
+                              ? ClipOval(
+                                  child: Image.network(
+                                    snapshot.data!['imageUrl'],
+                                    width: 140,
+                                    height: 140,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
                               : Icon(
                                   Icons.person,
                                   size: 60,
