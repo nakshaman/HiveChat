@@ -1,12 +1,10 @@
-import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hivechat/authentication/auth.dart';
 import 'package:hivechat/authentication/auth_wrapper.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:hivechat/screens/image_upload_service.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -16,42 +14,24 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  final ImageUploadService imageUploadService = ImageUploadService();
   bool isUploading = false;
   String? imageUrl;
-  final ImagePicker picker = ImagePicker();
-  Future<void> pickAndUploadImage(String uid) async {
-    try {
-      setState(() {
-        isUploading = true;
-        imageUrl = null;
-      });
-      final XFile? pickedFile = await picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 75,
-      );
-      if (pickedFile == null) {
-        setState(() {
-          isUploading = false;
-        });
-        return;
-      }
-      File file = File(pickedFile.path);
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('profilepics')
-          .child('$uid.jpg');
-      await ref.putFile(file);
-      final photoUrl = await ref.getDownloadURL();
+  Future<void> uploadProfileImage(String uid) async {
+    setState(() {
+      isUploading = true;
+    });
+    final imageUrl = await imageUploadService.pickAndUploadImage(
+      folderName: 'profilepics',
+    );
+    if (imageUrl != null) {
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        'imageUrl': photoUrl,
-      });
-    } catch (e) {
-      debugPrint(e.toString());
-    } finally {
-      setState(() {
-        isUploading = false;
+        'imageUrl': imageUrl,
       });
     }
+    setState(() {
+      isUploading = false;
+    });
   }
 
   @override
@@ -100,23 +80,15 @@ class _ProfileState extends State<Profile> {
                 }
 
                 String username = snapshot.data!['username'];
-
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       GestureDetector(
-                        onTap: () => pickAndUploadImage(user.uid),
+                        onTap: () => uploadProfileImage(user.uid),
                         child: CircleAvatar(
                           radius: 70,
                           backgroundColor: Colors.deepPurple[100],
-                          // foregroundImage:
-                          //     (snapshot.data!['imageUrl'] != null &&
-                          //         snapshot.data!['imageUrl']
-                          //             .toString()
-                          //             .isNotEmpty)
-                          //     ? NetworkImage(snapshot.data!['imageUrl'])
-                          //     : null,
                           child: isUploading
                               ? const CircularProgressIndicator(
                                   color: Colors.purple,

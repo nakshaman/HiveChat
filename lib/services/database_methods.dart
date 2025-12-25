@@ -4,15 +4,6 @@ import 'package:flutter/foundation.dart';
 
 class DatabaseMethods {
   final currentUser = FirebaseAuth.instance.currentUser;
-  // String getChatRoomId(String user1, String user2) {
-  //   user1 = user1.toLowerCase();
-  //   user2 = user2.toLowerCase();
-  //   if (user1.compareTo(user2) > 0) {
-  //     return "${user2}_$user1";
-  //   } else {
-  //     return "${user1}_$user2";
-  //   }
-  // }
 
   Future<void> storeUserData(
     String email,
@@ -61,11 +52,13 @@ class DatabaseMethods {
     String? chatRoomId,
     String message,
     String sender,
+    String type,
   ) async {
     Map<String, dynamic> messageData = {
       "message": message,
       "sender": sender,
       "time": DateTime.now(),
+      "type": type,
     };
     await FirebaseFirestore.instance
         .collection('chatRooms')
