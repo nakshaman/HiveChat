@@ -46,7 +46,6 @@ class ChatScreenState extends State<ChatScreen> {
       currentUsername,
       chatRoomId,
     );
-
     setState(() {});
   }
 
@@ -111,7 +110,7 @@ class ChatScreenState extends State<ChatScreen> {
     return Row(
       children: [
         IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         Expanded(
@@ -158,15 +157,13 @@ class ChatScreenState extends State<ChatScreen> {
         if (!snapshot.hasData) {
           return const Center(child: Text("Send a message"));
         }
-
         final docs = snapshot.data!.docs;
         final totalItems = docs.length + (isUploadingImage ? 1 : 0);
-
         return ListView.builder(
           reverse: true,
           itemCount: totalItems,
           itemBuilder: (context, index) {
-            // 🔥 TEMP IMAGE LOADER BUBBLE
+            //  TEMP IMAGE LOADER BUBBLE
             if (isUploadingImage && index == 0) {
               return uploadingBubble();
             }
